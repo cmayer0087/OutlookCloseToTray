@@ -18,8 +18,12 @@ namespace CloseToTray
         {
             try
             {
-                explrWin32Window = new OutlookWin32Window(Application.ActiveExplorer());
-                explrWin32Window.Closing += ExplrWin32Window_Closing;
+                var explorer = Application.ActiveExplorer();
+                if (explorer != null)
+                    InitOutlookWin32Window(explorer);
+                else
+                    Application.Explorers.NewExplorer += Explorers_NewExplorer;
+
                 if (EnsureMinToTrayIsSet())
                     MessageBox.Show("Setting 'Minimize to tray' changed to true.\nPlease restart outlook", "Settings changed", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -27,6 +31,21 @@ namespace CloseToTray
             {
                 MessageBox.Show("Error on initializing 'CloseToTray':\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void Explorers_NewExplorer(Outlook.Explorer Explorer)
+        {
+            InitOutlookWin32Window(Explorer);
+            Application.Explorers.NewExplorer -= Explorers_NewExplorer;
+        }
+
+        private void InitOutlookWin32Window(Outlook.Explorer explorer)
+        {
+            if(explorer == null || explrWin32Window != null)
+                return;
+
+            explrWin32Window = new OutlookWin32Window(explorer);
+            explrWin32Window.Closing += ExplrWin32Window_Closing;
         }
 
         private void ExplrWin32Window_Closing(object sender, OutlookWin32Window.CancelEventArgs e)
